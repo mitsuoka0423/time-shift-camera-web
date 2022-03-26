@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Time Shift Camera</title>
+  <link href="./destyle.css" rel="stylesheet">
+  <style>
+    canvas,
+    video {
+      border: none;
+    }
+
+    .video-flex {
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="video-flex">
+    <canvas id="canvas2" width="1920" height="1080"></canvas>
+    <video id="video" width="480" height="270"></video>
+  </div>
+  <canvas id="canvas1" width="1920" height="1080" style="display: none;"></canvas>
+
+  <script>
+    const FPS = 60;
+    let delaySec = 5;
+    const imageArray = Array(FPS * delaySec);
+
+    const main = async () => {
+      const video = document.querySelector("#video");
+      // iOS エラー対策
+      video.setAttribute('autoplay', '');
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+
+      const canvas1 = document.querySelector("#canvas1");
+      const canvas2 = document.querySelector("#canvas2");
+      // カメラ設定  //
+      const constraints = {
+        audio: false,
+        video: {
+          width: 1920,
+          height: 1080,
+        },
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      video.onloadedmetadata = (e) => {
+        video.play();
+
+        const intervalId = setInterval(function () {
+          // canvas1から画像を取得して変数に入れる
+          picture = canvas1.getContext("2d");
+          picture.drawImage(video, 0, 0, canvas1.width, canvas1.height);
+          imageArray.push(picture.getImageData(0, 0, canvas1.width, canvas1.height));
+
+          try {
+            document.getElementById("canvas2").getContext('2d').putImageData(imageArray.shift(), 0, 0);
+          } catch (e) {
+            // エラー時には何もしない
+          };
+        }, 1000 / FPS);
+      };
+    };
+
+    window.onload = () => {
+      main();
+    };
+  </script>
+</body>
+
+</html>
