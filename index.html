@@ -21,9 +21,10 @@
   <script>
     const FPS = 60;
     let delaySec = 5;
-    const imageArray = Array(FPS * delaySec);
 
     const main = async () => {
+      const imageArray = Array(FPS * delaySec);
+
       const video = document.querySelector("#video");
       // iOS エラー対策
       video.setAttribute('autoplay', '');
