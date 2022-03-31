@@ -10,13 +10,24 @@
     video {
       border: none;
     }
+
+    .video-flex {
+      display: flex;
+    }
   </style>
 </head>
 
 <body>
-  <canvas id="canvas2" width="1920" height="1080"></canvas>
-  <video id="video" width="480" height="270"></video>
-  <canvas id="canvas1" width="1920" height="1080" style="display: none;"></canvas>
+  <div class="video-flex">
+    <div class="video-parent" id="videoParent">
+      <canvas id="canvas1"></canvas>
+    </div>
+    <div class="canvas2-parent" id="canvas2Parent">
+      <canvas id="canvas2"></canvas>
+    </div>
+  </div>
+  <video id="video" style="display: none;"></video>
+
 
   <script>
     const FPS = 60;
@@ -32,7 +43,13 @@
       video.setAttribute('playsinline', '');
 
       const canvas1 = document.querySelector("#canvas1");
+      canvas1.width = window.innerWidth / 2;
+      canvas1.height = window.innerHeight / 2;
+
       const canvas2 = document.querySelector("#canvas2");
+      canvas2.width = window.innerWidth / 2;
+      canvas2.height = window.innerHeight / 2;
+
       // カメラ設定  //
       const constraints = {
         audio: false,
