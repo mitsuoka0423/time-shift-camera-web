@@ -37,9 +37,10 @@
   <div class="video-flex">
     <canvas id="canvasRealtime1"></canvas>
     <canvas id="canvasDelay1"></canvas>
-    <canvas id="canvasRecord1" style="display: none;"></canvas>
     <video id="video1" style="display: none;"></video>
   </div>
+  <canvas id="canvasRecord1"></canvas>
+
   <div class="video-flex">
     <canvas id="canvasRealtime2"></canvas>
     <canvas id="canvasDelay2"></canvas>
@@ -50,11 +51,12 @@
   <script>
     const FPS = 60;
     let delaySec = 5;
-    let recordSec = 5;
+    let recordDelaySec = 2;
+    let recordSec = 10;
 
     const showDelayVideo = async (webCameraDeviceId, video, canvasRealTime, canvasDelay, canvasRecord) => {
       const delayImageArray = Array(FPS * delaySec);
-      const recordImageArray = Array(FPS * (recordSec + delaySec));
+      const recordImageArray = Array(FPS * (delaySec + recordDelaySec));
 
       // iOS エラー対策
       video.setAttribute('autoplay', '');
@@ -129,10 +131,10 @@
     };
 
     const onClickRecordButton = () => {
-      const canvasRecord1 = document.querySelector("#canvasRecord1");
-      const canvasRecord2 = document.querySelector("#canvasRecord2");
-
-      const canvasRecordList = [canvasRecord1, canvasRecord2];
+      const canvasRecordList = [
+        document.querySelector("#canvasRecord1"), 
+        // document.querySelector("#canvasRecord2"),
+      ];
 
       canvasRecordList.map((canvasRecord) => {
         record(canvasRecord);
