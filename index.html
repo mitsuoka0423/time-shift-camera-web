@@ -25,8 +25,18 @@
     <div class="canvas2-parent" id="canvas2Parent">
       <canvas id="canvas2"></canvas>
     </div>
+    <video id="video1" style="display: none;"></video>
   </div>
-  <video id="video" style="display: none;"></video>
+  <div class="video-flex">
+    <div class="video-parent" id="videoParent">
+      <canvas id="canvas3"></canvas>
+    </div>
+    <div class="canvas2-parent" id="canvas2Parent">
+      <canvas id="canvas4"></canvas>
+    </div>
+    <video id="video2" style="display: none;"></video>
+
+  </div>
 
 
   <script>
@@ -36,11 +46,16 @@
     const main = async () => {
       const imageArray = Array(FPS * delaySec);
 
-      const video = document.querySelector("#video");
+      const video1 = document.querySelector("#video1");
       // iOS エラー対策
-      video.setAttribute('autoplay', '');
-      video.setAttribute('muted', '');
-      video.setAttribute('playsinline', '');
+      video1.setAttribute('autoplay', '');
+      video1.setAttribute('muted', '');
+      video1.setAttribute('playsinline', '');
+
+      const video2 = document.querySelector("#video2");
+      video2.setAttribute('autoplay', '');
+      video2.setAttribute('muted', '');
+      video2.setAttribute('playsinline', '');
 
       const canvas1 = document.querySelector("#canvas1");
       canvas1.width = window.innerWidth / 2;
@@ -50,28 +65,69 @@
       canvas2.width = window.innerWidth / 2;
       canvas2.height = window.innerHeight / 2;
 
-      // カメラ設定  //
-      const constraints = {
+      const canvas3 = document.querySelector("#canvas3");
+      canvas3.width = window.innerWidth / 2;
+      canvas3.height = window.innerHeight / 2;
+
+      const canvas4 = document.querySelector("#canvas4");
+      canvas4.width = window.innerWidth / 2;
+      canvas4.height = window.innerHeight / 2;
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      console.log(devices);
+
+      // カメラ設定
+      const constraints1 = {
         audio: false,
         video: {
+          deviceId: 'b3e467771429fadd43af9b833e3c59d0d5af9024f54ed108bfea5cf144e3f710',
           width: 1920,
           height: 1080,
         },
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      video.srcObject = stream;
-      video.onloadedmetadata = (e) => {
-        video.play();
+      const stream1 = await navigator.mediaDevices.getUserMedia(constraints1);
+      video1.srcObject = stream1;
+      video1.onloadedmetadata = (e) => {
+        video1.play();
 
         const intervalId = setInterval(function () {
           // canvas1から画像を取得して変数に入れる
           picture = canvas1.getContext("2d");
-          picture.drawImage(video, 0, 0, canvas1.width, canvas1.height);
+          picture.drawImage(video1, 0, 0, canvas1.width, canvas1.height);
           imageArray.push(picture.getImageData(0, 0, canvas1.width, canvas1.height));
 
           try {
-            document.getElementById("canvas2").getContext('2d').putImageData(imageArray.shift(), 0, 0);
+            canvas2.getContext('2d').putImageData(imageArray.shift(), 0, 0);
+          } catch (e) {
+            // エラー時には何もしない
+          };
+        }, 1000 / FPS);
+      };
+
+      // カメラ設定
+      const constraints2 = {
+        audio: false,
+        video: {
+          deviceId: '001aa35be6840acc3af9673302c434c702626c77c4872f3cd5a2ace79a209eb7',
+          width: 1920,
+          height: 1080,
+        },
+      };
+
+      const stream2 = await navigator.mediaDevices.getUserMedia(constraints2);
+      video2.srcObject = stream2;
+      video2.onloadedmetadata = (e) => {
+        video2.play();
+
+        const intervalId = setInterval(function () {
+          // canvas1から画像を取得して変数に入れる
+          picture = canvas3.getContext("2d");
+          picture.drawImage(video2, 0, 0, canvas3.width, canvas3.height);
+          imageArray.push(picture.getImageData(0, 0, canvas3.width, canvas3.height));
+
+          try {
+            canvas4.getContext('2d').putImageData(imageArray.shift(), 0, 0);
           } catch (e) {
             // エラー時には何もしない
           };
