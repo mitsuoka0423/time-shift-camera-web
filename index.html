@@ -6,6 +6,10 @@
   <title>Time Shift Camera</title>
   <link href="./destyle.css" rel="stylesheet">
   <style>
+    body {
+      position: relative;
+    }
+
     canvas,
     video {
       border: none;
@@ -14,35 +18,43 @@
     .video-flex {
       display: flex;
     }
+
+    .record-button {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 
 <body>
+  <a id="download-link">download</a>
+  <button class="record-button" id="record">Record</button>
   <div class="video-flex">
-    <div class="video-parent" id="videoParent">
-      <canvas id="canvas1"></canvas>
-    </div>
-    <div class="canvas2-parent" id="canvas2Parent">
-      <canvas id="canvas2"></canvas>
-    </div>
+    <canvas id="canvasRealtime1"></canvas>
+    <canvas id="canvasDelay1"></canvas>
+    <canvas id="canvasRecord1"></canvas>
     <video id="video1" style="display: none;"></video>
   </div>
   <div class="video-flex">
-    <div class="video-parent" id="videoParent">
-      <canvas id="canvas3"></canvas>
-    </div>
-    <div class="canvas2-parent" id="canvas2Parent">
-      <canvas id="canvas4"></canvas>
-    </div>
+    <canvas id="canvasRealtime2"></canvas>
+    <canvas id="canvasDelay2"></canvas>
+    <canvas id="canvasRecord2"></canvas>
     <video id="video2" style="display: none;"></video>
   </div>
 
   <script>
     const FPS = 60;
     let delaySec = 5;
+    let recordSec = 5;
 
-    const showDelayVideo = async (webCameraDeviceId, video, canvasRealTime, canvasDelay) => {
-      const imageArray = Array(FPS * delaySec);
+    const showDelayVideo = async (webCameraDeviceId, video, canvasRealTime, canvasDelay, canvasRecord) => {
+      const delayImageArray = Array(FPS * delaySec);
+      const recordImageArray = Array(FPS * (recordSec + delaySec));
 
       // iOS エラー対策
       video.setAttribute('autoplay', '');
@@ -54,6 +66,9 @@
 
       canvasDelay.width = window.innerWidth / 2;
       canvasDelay.height = window.innerHeight / 2;
+
+      canvasRecord.width = window.innerWidth / 2;
+      canvasRecord.height = window.innerHeight / 2;
 
       const constraints = {
         audio: false,
@@ -73,10 +88,12 @@
           // canvasRealTimeから画像を取得して変数に入れる
           const picture = canvasRealTime.getContext("2d");
           picture.drawImage(video, 0, 0, canvasRealTime.width, canvasRealTime.height);
-          imageArray.push(picture.getImageData(0, 0, canvasRealTime.width, canvasRealTime.height));
+          delayImageArray.push(picture.getImageData(0, 0, canvasRealTime.width, canvasRealTime.height));
+          recordImageArray.push(picture.getImageData(0, 0, canvasRealTime.width, canvasRealTime.height));
 
           try {
-            canvasDelay.getContext('2d').putImageData(imageArray.shift(), 0, 0);
+            canvasDelay.getContext('2d').putImageData(delayImageArray.shift(), 0, 0);
+            canvasRecord.getContext('2d').putImageData(recordImageArray.shift(), 0, 0);
           } catch (e) {
             // エラー時には何もしない
           };
@@ -84,21 +101,63 @@
       };
     }
 
+    const record = (canvasRecord) => {
+      const stream = canvasRecord.captureStream();
+      const recorder = new MediaRecorder(stream, {mimeType:'video/webm;codecs=vp9'});
+
+      const anchor = document.getElementById('download-link');
+
+      recorder.ondataavailable = function(e) {
+        const videoBlob = new Blob([e.data], { type: e.data.type });
+        const blobUrl = window.URL.createObjectURL(videoBlob);
+
+        anchor.download = 'recorded.webm';
+        anchor.href = blobUrl;
+
+        const clickEvent = new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        anchor.dispatchEvent(clickEvent);
+      }
+
+      recorder.start();
+      setTimeout(() => {
+        recorder.stop();
+      }, recordSec * 1000);
+    };
+
+    const onClickRecordButton = () => {
+      const canvasRecord1 = document.querySelector("#canvasRecord1");
+      const canvasRecord2 = document.querySelector("#canvasRecord2");
+
+      const canvasRecordList = [canvasRecord1, canvasRecord2];
+
+      canvasRecordList.map((canvasRecord) => {
+        record(canvasRecord);
+      });
+    }
+
     const main = async () => {
       const devices = await navigator.mediaDevices.enumerateDevices();
       console.log(devices);
 
+      document.getElementById('record').addEventListener('click', onClickRecordButton);
+
       const webCamera1DeviceId = 'b3e467771429fadd43af9b833e3c59d0d5af9024f54ed108bfea5cf144e3f710';
       const video1 = document.querySelector("#video1");
-      const canvas1 = document.querySelector("#canvas1");
-      const canvas2 = document.querySelector("#canvas2");
-      showDelayVideo(webCamera1DeviceId, video1, canvas1, canvas2);
+      const canvasRealtime1 = document.querySelector("#canvasRealtime1");
+      const canvasDelay1 = document.querySelector("#canvasDelay1");
+      const canvasRecord1 = document.querySelector("#canvasRecord1");
+      showDelayVideo(webCamera1DeviceId, video1, canvasRealtime1, canvasDelay1, canvasRecord1);
 
       const webCamera2DeviceId = '1c23bc7b88c92b392560344b1afbc2858b13c260fcd697de5dce661c0ac4408f';
       const video2 = document.querySelector("#video2");
-      const canvas3 = document.querySelector("#canvas3");
-      const canvas4 = document.querySelector("#canvas4");
-      showDelayVideo(webCamera2DeviceId, video2, canvas3, canvas4);
+      const canvasRealtime2 = document.querySelector("#canvasRealtime2");
+      const canvasDelay2 = document.querySelector("#canvasDelay2");
+      const canvasRecord2 = document.querySelector("#canvasRecord2");
+      showDelayVideo(webCamera2DeviceId, video2, canvasRealtime2, canvasDelay2, canvasRecord2);
     };
 
     window.onload = () => {
